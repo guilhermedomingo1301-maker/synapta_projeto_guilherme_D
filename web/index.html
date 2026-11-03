@@ -512,30 +512,45 @@
             </section>
           </div>
 
-          <!-- ABA 3: METADADOS & DIAGNÓSTICO DE TRATATIVAS -->
+          <!-- ABA 4: METADADOS & DIAGNÓSTICO DE TRATATIVAS (ALINHADO AO RELATÓRIO PDF) -->
           <div class="tab-pane" data-tab-pane="notas" role="tabpanel">
             <section class="content-block">
               <div class="block-header">
                 <div>
-                  <h3 class="block-title">Auditoria de Inconsistências &amp; Qualidade</h3>
-                  <p class="block-subtitle">Pontos identificados no dataset para tratativas futuras</p>
+                  <h3 class="block-title">Auditoria de Qualidade e Tratativas de Preparação dos Dados</h3>
+                  <p class="block-subtitle">Inspeção manual na planilha eletrônica + validação programática (Seção 3 do Relatório Técnico)</p>
                 </div>
               </div>
               <div class="diagnostics-grid">
                 <div class="diag-card">
-                  <span class="diag-number" id="diag-area-zero">2</span>
-                  <span class="diag-label">Imóveis com área &le; 0 m²</span>
-                  <span class="diag-desc">Casos inconsistentes que distorcem o cálculo de R$/m²</span>
+                  <span class="diag-number" id="diag-nulls">0</span>
+                  <span class="diag-label">Valores Ausentes (NULL / Vazios)</span>
+                  <span class="diag-desc">Planilha 100% preenchida até a última linha (11.657 registros e 8 colunas completas).</span>
                 </div>
                 <div class="diag-card">
-                  <span class="diag-number" id="diag-duplicates">46</span>
-                  <span class="diag-label">Anúncios idênticos parciais</span>
-                  <span class="diag-desc">Mesmo endereço, bairro, área, quartos e preço</span>
+                  <span class="diag-number" id="diag-duplicates">2 pares</span>
+                  <span class="diag-label">Duplicatas de Mesmo Endereço</span>
+                  <span class="diag-desc">2 pares com mesmo endereço e porte, mas preços diferentes: excluído 1 registro de cada par para evitar duplicatas exatas.</span>
+                </div>
+                <div class="diag-card">
+                  <span class="diag-number" id="diag-area-zero">2</span>
+                  <span class="diag-label">Metragens Zeradas (area &le; 0 m²)</span>
+                  <span class="diag-desc">Bela Vista (R$ 2.800) e Brás (R$ 1.700): exclusão manual de linhas inconsistentes e filtragem no cálculo de R$/m² sem presumir área artificial.</span>
+                </div>
+                <div class="diag-card">
+                  <span class="diag-number" id="diag-total-rent">0</span>
+                  <span class="diag-label">Inconsistência Financeira (total &lt; rent)</span>
+                  <span class="diag-desc">Em 100% dos anúncios o custo total mensal é maior ou igual ao aluguel nominal anunciado.</span>
                 </div>
                 <div class="diag-card">
                   <span class="diag-number" id="diag-singletons">340</span>
-                  <span class="diag-label">Bairros com apenas 1 anúncio</span>
-                  <span class="diag-desc">Amostras sem significância isolada (n=1)</span>
+                  <span class="diag-label">Bairros com Apenas 1 Anúncio (n = 1)</span>
+                  <span class="diag-desc">Dos 1.185 bairros distintos, 340 têm n=1. Aplicado corte mínimo de n &ge; 15 nos rankings de localidades.</span>
+                </div>
+                <div class="diag-card">
+                  <span class="diag-number" id="diag-metro">232</span>
+                  <span class="diag-label">Anúncios na Região Metropolitana</span>
+                  <span class="diag-desc">Imóveis fora da Capital (Alphaville, Tamboré, Taboão, Osasco) segregados das 5 Macrozonas de São Paulo.</span>
                 </div>
               </div>
             </section>
@@ -543,19 +558,19 @@
             <section class="content-block">
               <div class="block-header">
                 <div>
-                  <h3 class="block-title">Média vs Mediana: Explicação Metodológica</h3>
-                  <p class="block-subtitle">Conceito fundamental exigido no Edital SYNAPTA</p>
+                  <h3 class="block-title">Média vs. Mediana: Explicação Metodológica</h3>
+                  <p class="block-subtitle">Conceito fundamental exigido no Edital SYNAPTA (Seção 4 do Relatório Técnico)</p>
                 </div>
               </div>
               <div class="methodology-card">
                 <p>
-                  <strong>Por que a Média (R$ 3.250) é superior à Mediana (R$ 2.415)?</strong>
+                  <strong>Por que o Preço Médio (R$ 3.250,81) e o Preço Mediano (R$ 2.415,00) são tão diferentes (+R$ 835,81 / +34,6%)?</strong>
                 </p>
                 <p>
-                  A distribuição de preços de aluguel possui <em>assimetria positiva (à direita)</em>. A maioria dos anúncios concentra-se em faixas populares e médias, mas a presença de imóveis de alto padrão (anúncios que chegam a R$ 25.000 em bairros nobres como Jardins, Itaim Bibi e Vila Nova Conceição) puxa a <strong>média aritmética para cima</strong>.
+                  A distribuição de preços de aluguel possui forte <em>assimetria positiva (à direita)</em>. Existe um piso rígido (os aluguéis mais simples partem de R$ 500,00), mas uma "cauda longa" de mansões, coberturas e lajes residenciais que chegam a R$ 25.000,00/mês (em bairros como Alto de Pinheiros, Jardim Paulista, Itaim Bibi e Alphaville) puxa a <strong>média aritmética para R$ 3.250,81</strong> (e o custo total médio para <strong>R$ 4.080,03</strong>).
                 </p>
                 <p>
-                  A <strong>mediana</strong>, por sua vez, divide exatamente a amostra ao meio (50% custam até R$ 2.415 e 50% custam mais), sendo uma medida muito mais resistente a valores extremos (outliers).
+                  A <strong>mediana (R$ 2.415,00 no aluguel e R$ 3.057,00 no custo total)</strong> divide a fila ordenada exatamente ao meio: 50% dos imóveis de São Paulo custam até R$ 2.415,00, permanecendo imune a valores extremos (outliers).
                 </p>
               </div>
             </section>
@@ -563,14 +578,16 @@
             <section class="content-block">
               <div class="block-header">
                 <div>
-                  <h3 class="block-title">Limitações do Dataset</h3>
-                  <p class="block-subtitle">Critérios a considerar na tomada de decisão</p>
+                  <h3 class="block-title">Limitações da Análise (Seção 9 do Relatório Técnico)</h3>
+                  <p class="block-subtitle">Fronteiras empíricas que os dados não permitem concluir</p>
                 </div>
               </div>
               <ul class="limitations-list">
-                <li><strong>Preço Anunciado vs Negociado:</strong> Os valores refletem a expectativa inicial do proprietário, não o valor final fechado no contrato de locação.</li>
-                <li><strong>Concentração Geográfica:</strong> Bairros das zonas Sul e Oeste possuem ampla densidade amostral, enquanto áreas periféricas contam com menor cobertura no portal de anúncios.</li>
-                <li><strong>Ausência de Variáveis Críticas:</strong> O dataset não contempla andar, estado de conservação do imóvel, mobília ou infraestrutura do condomínio (piscina, academia, portaria 24h).</li>
+                <li><strong>1. Preço Anunciado (Asking Price) vs. Preço Contratado:</strong> Os valores de <code>rent</code> e <code>total</code> refletem a pedida inicial na plataforma, sem contemplar descontos de negociação ou carências contratuais.</li>
+                <li><strong>2. Ausência de Atributos Qualitativos e Construtivos:</strong> O dataset não informa banheiros/suítes, idade do prédio, andar, reforma, mobília, segurança da via, ruído urbano, distância ao metrô ou lazer do condomínio (portaria 24h, piscina, academia).</li>
+                <li><strong>3. Agregação das Taxas na Coluna Total:</strong> A diferença (<code>total - rent</code>, média de +R$ 829,22 ou +25,5%) soma condomínio, IPTU e seguro incêndio em uma única cifra, sem desmembrar cada encargo.</li>
+                <li><strong>4. Concentração Espacial e Fronteiras Metropolitanas:</strong> Forte densidade no centro expandido, 340 localidades com apenas 1 anúncio (exigindo filtro <code>n &ge; 15</code>) e presença de municípios vizinhos da Grande SP.</li>
+                <li><strong>5. Fotografia Estática (Ausência de Série Temporal):</strong> Não há data de publicação dos anúncios, impedindo medir inflação locatícia (IGP-M/IPCA) ou tempo de vacância.</li>
               </ul>
             </section>
           </div>

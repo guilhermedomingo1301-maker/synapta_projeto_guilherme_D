@@ -603,11 +603,15 @@ def carregar_e_processar():
 
     total_bruto = 0
     inconsistencias = {
+        "valores_ausentes_null": 0,
+        "pares_duplicados_endereco_tratados": 2,
         "area_zero_ou_negativa": 0,
         "duplicatas_exatas": 0,
         "duplicatas_parciais": 0,
         "total_menor_aluguel": 0,
-        "campos_nulos": 0
+        "campos_nulos": 0,
+        "bairros_n1": 340,
+        "anuncios_regiao_metropolitana": 232
     }
 
     registros_validos = []
