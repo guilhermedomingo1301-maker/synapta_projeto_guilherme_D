@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Análise Imobiliária de São Paulo — Desafio SYNAPTA</title>
+
+  <!-- Tipografia Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+    rel="stylesheet"
+  />
+
+  <!-- Leaflet CSS -->
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+    crossorigin=""
+  />
+
+  <!-- Estilos Modulares -->
+  <link rel="stylesheet" href="./css/variables.css" />
+  <link rel="stylesheet" href="./css/layout.css" />
+  <link rel="stylesheet" href="./css/components.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <!-- Cabeçalho Superior -->
+    <header class="app-header">
+      <div class="brand-group">
+        <div class="brand-mark" aria-hidden="true">SY</div>
+        <div class="brand-titles">
+          <h1 class="brand-title">São Paulo Housing Analytics</h1>
+          <span class="brand-subtitle">Desafio SYNAPTA &bull; Laboratório de Dados &amp; IA</span>
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <div class="status-pill" id="dataset-status-pill" title="Dataset Sao Paulo Housing Prices carregado">
+          <span class="status-dot" aria-hidden="true"></span>
+          <span id="header-records-counter">11.657 imóveis mapeados</span>
+        </div>
+
+        <!-- Alternador para telas menores (mobile) -->
+        <div class="mobile-view-switcher" role="group" aria-label="Modo de visualização mobile">
+          <button type="button" class="is-active" data-mobile-mode="split">Dividido</button>
+          <button type="button" data-mobile-mode="map">Mapa</button>
+          <button type="button" data-mobile-mode="info">Painel</button>
+        </div>
+
+        <button type="button" id="btn-theme-toggle" class="btn-ghost" aria-label="Alternar tema">
+          <span id="theme-toggle-label">Modo Escuro</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Área Principal: Lateral Esquerda (Mapa) + Lateral Direita (Indicadores e Informações) -->
+    <main id="workspace" class="workspace">
+      <!-- LATERAL ESQUERDA: MAPA -->
+      <section id="map-panel" class="panel-map" aria-label="Visualização geográfica de São Paulo">
+        <div class="map-overlay-top">
+          <div class="map-top-left-stack">
+            <div class="map-card-floating">
+              <span style="font-size: 0.76rem; font-weight: 600;">Recorte:</span>
+              <span id="map-current-region-badge" style="font-size: 0.76rem; color: var(--accent-primary); font-weight: 600;">
+                São Paulo (Visão Geral)
+              </span>
+              <span style="color: var(--border-strong); margin: 0 0.15rem;">|</span>
+              <label for="select-map-layer" style="font-size: 0.72rem; color: var(--text-muted); font-weight: 600;">Mapa:</label>
+              <select id="select-map-layer" class="filter-select" style="width: auto; padding: 0.22rem 1.55rem 0.22rem 0.45rem; font-size: 0.74rem;">
+                <option value="streets" selected>Ruas (OpenStreetMap)</option>
+                <option value="dark">Modo Noturno (ESRI)</option>
+                <option value="light_clean">Vias Claras (ESRI)</option>
+                <option value="satellite">Satélite (ESRI)</option>
+              </select>
+              <span style="color: var(--border-strong); margin: 0 0.15rem;">|</span>
+              <button type="button" id="btn-toggle-map-pins" class="map-pins-toggle-btn" title="Mostrar ou ocultar os pinos individuais de cada anúncio dentro da zona selecionada">
+                &#128205; Ver Pinos Individuais
+              </button>
+            </div>
+
+            <!-- Barra Interativa de Regiões (Zonas) de São Paulo -->
+            <div class="map-zones-bar" role="group" aria-label="Separar por regiões de São Paulo">
+              <button type="button" class="zone-pill-btn is-active" data-zone-filter="all" title="Exibir todas as regiões de São Paulo">
+                Todas
+              </button>
+              <button type="button" class="zone-pill-btn" data-zone-filter="Centro" title="Filtrar Região Central">
+                <span class="zone-dot" style="background: #8b5cf6;"></span>Centro
+              </button>
+              <button type="button" class="zone-pill-btn" data-zone-filter="Zona Norte" title="Filtrar Zona Norte">
+                <span class="zone-dot" style="background: #06b6d4;"></span>Z. Norte
+              </button>
+              <button type="button" class="zone-pill-btn" data-zone-filter="Zona Sul" title="Filtrar Zona Sul">
+                <span class="zone-dot" style="background: #10b981;"></span>Z. Sul
+              </button>
+              <button type="button" class="zone-pill-btn" data-zone-filter="Zona Leste" title="Filtrar Zona Leste">
+                <span class="zone-dot" style="background: #f59e0b;"></span>Z. Leste
+              </button>
+              <button type="button" class="zone-pill-btn" data-zone-filter="Zona Oeste" title="Filtrar Zona Oeste">
+                <span class="zone-dot" style="background: #ec4899;"></span>Z. Oeste
+              </button>
+              <button type="button" id="btn-map-clear-filters" class="zone-clear-filters-btn" title="Limpar todos os filtros ativos e restaurar visão geral">
+                &times; Limpar Filtros
+              </button>
+            </div>
+          </div>
+
+          <div class="map-controls-stack" role="toolbar" aria-label="Controles do mapa">
+            <button type="button" id="btn-zoom-in" class="map-control-btn" title="Aproximar (+)" aria-label="Aproximar">
+              +
+            </button>
+            <button type="button" id="btn-zoom-out" class="map-control-btn" title="Afastar (-)" aria-label="Afastar">
+              &minus;
+            </button>
+            <button type="button" id="btn-reset-view" class="map-control-btn" title="Centralizar visão em São Paulo" aria-label="Centralizar visão em São Paulo">
+              &#8982;
+            </button>
+            <button type="button" id="btn-toggle-maximize" class="map-control-btn" title="Expandir mapa" aria-label="Expandir mapa" aria-pressed="false">
+              &#x26F6;
+            </button>
+          </div>
+        </div>
+
+        <!-- Container do Mapa Leaflet -->
+        <div id="map-container" class="map-viewport"></div>
+
+        <!-- Balão Fixo de Informações do Bairro/Zona (independente do zoom do mapa) -->
+        <aside id="map-fixed-balloon" class="map-fixed-balloon" aria-live="polite" style="display: none;"></aside>
+
+        <!-- Legenda Inferior do Mapa (Interativa) -->
+        <div class="map-overlay-bottom">
+          <div class="map-legend-placeholder" id="map-legend">
+            <div class="legend-header-row">
+              <div class="legend-title">Aluguel Médio por Bairro</div>
+              <button type="button" id="btn-clear-tier-filter" class="legend-clear-btn" style="display: none;" title="Mostrar todas as faixas">
+                Limpar &times;
+              </button>
+            </div>
+            <div class="legend-color-scale" role="group" aria-label="Filtro interativo por faixas de aluguel médio">
+              <button type="button" class="legend-item-btn" data-price-tier="low" title="Filtrar bairros com aluguel médio até R$ 2.000">
+                <span class="legend-dot" style="background: #10b981;"></span>
+                <span>&le; R$ 2.000</span>
+              </button>
+              <button type="button" class="legend-item-btn" data-price-tier="mid-low" title="Filtrar bairros com aluguel médio entre R$ 2.000 e R$ 3.500">
+                <span class="legend-dot" style="background: #3b82f6;"></span>
+                <span>R$ 2k-3.5k</span>
+              </button>
+              <button type="button" class="legend-item-btn" data-price-tier="mid-high" title="Filtrar bairros com aluguel médio entre R$ 3.500 e R$ 5.000">
+                <span class="legend-dot" style="background: #f59e0b;"></span>
+                <span>R$ 3.5k-5k</span>
+              </button>
+              <button type="button" class="legend-item-btn" data-price-tier="high" title="Filtrar bairros com aluguel médio acima de R$ 5.000">
+                <span class="legend-dot" style="background: #ef4444;"></span>
+                <span>&gt; R$ 5k</span>
+              </button>
+            </div>
+            <div class="legend-caption" id="legend-status-caption">Clique em uma faixa para filtrar no mapa e painel</div>
+          </div>
+
+          <div id="map-coords" class="map-coords-badge" aria-live="polite">
+            Lat: -23.5505 | Lng: -46.6333
+          </div>
+        </div>
+      </section>
+
+      <!-- DIVISOR REDIMENSIONÁVEL -->
+      <div
+        id="panel-resizer"
+        class="panel-resizer"
+        role="separator"
+        aria-orientation="vertical"
+        aria-label="Arraste para ajustar a largura entre o mapa e os indicadores"
+        tabindex="0"
+      ></div>
+
+      <!-- LATERAL DIREITA: INDICADORES E INFORMAÇÕES -->
+      <aside id="info-panel" class="panel-info" aria-label="Indicadores e informações analíticas">
+        <!-- Cabeçalho fixo do painel direito -->
+        <div class="info-header">
+          <div class="info-context-row">
+            <div>
+              <div class="info-section-tag" id="panel-context-tag">Visão Consolidada</div>
+              <h2 class="info-title" id="selected-region-title">Município de São Paulo</h2>
+            </div>
+            <button type="button" id="btn-reset-selection" class="btn-clear-filters" title="Limpar todos os filtros ativos e voltar para a visão geral da cidade">
+              &times; Limpar Filtros
+            </button>
+          </div>
+
+          <!-- Barra de Filtros Interativos -->
+          <div class="filter-bar filter-bar-3" aria-label="Filtros analíticos">
+              <div class="filter-field">
+                <label for="select-region" class="filter-label">Região de SP:</label>
+                <select id="select-region" class="filter-select">
+                  <option value="all">Todas as Regiões</option>
+                  <option value="Centro">Centro</option>
+                  <option value="Zona Norte">Zona Norte</option>
+                  <option value="Zona Sul">Zona Sul</option>
+                  <option value="Zona Leste">Zona Leste</option>
+                  <option value="Zona Oeste">Zona Oeste</option>
+                  <option value="Região Metropolitana">Região Metropolitana</option>
+                </select>
+              </div>
+
+            <div class="filter-field">
+              <label for="select-district" class="filter-label">Bairro / Distrito:</label>
+              <select id="select-district" class="filter-select">
+                <option value="all">Todos os Bairros (Geral SP)</option>
+              </select>
+            </div>
+
+            <div class="filter-field">
+              <label for="select-property-type" class="filter-label">Tipo de Imóvel:</label>
+              <select id="select-property-type" class="filter-select">
+                <option value="all">Todos os Tipos</option>
+                <option value="Apartamento">Apartamento</option>
+                <option value="Casa">Casa</option>
+                <option value="Studio e kitnet">Studio e kitnet</option>
+                <option value="Casa em condomínio">Casa em condomínio</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Abas de Navegação -->
+        <nav class="panel-tabs" role="tablist" aria-label="Seções do painel direito">
+          <button
+            type="button"
+            class="tab-btn is-active"
+            role="tab"
+            aria-selected="true"
+            data-tab-target="indicadores"
+          >
+            Indicadores &amp; Gráficos
+          </button>
+          <button
+            type="button"
+            class="tab-btn"
+            role="tab"
+            aria-selected="false"
+            data-tab-target="anuncios"
+            id="tab-btn-anuncios"
+          >
+            Anúncios por Zona <span id="tab-anuncios-badge" class="tab-count-badge">11.657</span>
+          </button>
+          <button
+            type="button"
+            class="tab-btn"
+            role="tab"
+            aria-selected="false"
+            data-tab-target="informacoes"
+          >
+            Tabela de Bairros
+          </button>
+          <button
+            type="button"
+            class="tab-btn"
+            role="tab"
+            aria-selected="false"
+            data-tab-target="notas"
+          >
+            Diagnóstico &amp; Metadados
+          </button>
+        </nav>
+
+        <!-- Conteúdo Rolável -->
+        <div class="info-scroll-container">
+          <!-- ABA 1: INDICADORES & GRÁFICOS -->
+          <div class="tab-pane is-active" data-tab-pane="indicadores" role="tabpanel">
+            <!-- 4 Cards de Indicadores Centrais (KPIs) -->
+            <section aria-label="Cartões de indicadores principais">
+              <div class="kpi-grid">
+                <article class="kpi-card" data-kpi-slot="1">
+                  <div class="kpi-header">
+                    <span class="kpi-label">Aluguel Médio</span>
+                    <span class="kpi-slot-badge">MÉDIA</span>
+                  </div>
+                  <div class="kpi-value" id="kpi-rent-mean">R$ --</div>
+                  <div class="kpi-meta" id="kpi-rent-mean-meta">Impactado por imóveis de alto padrão</div>
+                </article>
+
+                <article class="kpi-card" data-kpi-slot="2">
+                  <div class="kpi-header">
+                    <span class="kpi-label">Aluguel Mediano</span>
+                    <span class="kpi-slot-badge">MEDIANA</span>
+                  </div>
+                  <div class="kpi-value" id="kpi-rent-median">R$ --</div>
+                  <div class="kpi-meta" id="kpi-rent-median-meta">Valor central de mercado (50%)</div>
+                </article>
+
+                <article class="kpi-card" data-kpi-slot="3">
+                  <div class="kpi-header">
+                    <span class="kpi-label">Preço Médio por m²</span>
+                    <span class="kpi-slot-badge">R$/m²</span>
+                  </div>
+                  <div class="kpi-value" id="kpi-rent-m2">R$ --/m²</div>
+                  <div class="kpi-meta" id="kpi-rent-m2-meta">Média de R$ por área útil</div>
+                </article>
+
+                <article class="kpi-card kpi-card-interactive" data-kpi-slot="4" id="kpi-card-anuncios" title="Clique para visualizar os anúncios separadamente desta zona/bairro">
+                  <div class="kpi-header">
+                    <span class="kpi-label">Amostra de Imóveis</span>
+                    <span class="kpi-slot-badge">ANÚNCIOS</span>
+                  </div>
+                  <div class="kpi-value" id="kpi-records-count">--</div>
+                  <div class="kpi-meta kpi-action-link" id="kpi-records-meta">Ver anúncios separadamente &rarr;</div>
+                </article>
+              </div>
+            </section>
+
+            <!-- Gráfico 1: Média vs Mediana por Tipo de Imóvel -->
+            <section class="content-block">
+              <div class="block-header">
+                <div>
+                  <h3 class="block-title">Média vs Mediana por Tipo de Imóvel</h3>
+                  <p class="block-subtitle">Comparação da assimetria entre média aritmética e valor central</p>
+                </div>
+              </div>
+              <div class="chart-canvas-wrapper">
+                <canvas id="chart-type-comparison"></canvas>
+              </div>
+            </section>
+
+            <!-- Gráfico 2: Aluguel por Quantidade de Quartos -->
+            <section class="content-block">
+              <div class="block-header">
+                <div>
+                  <h3 class="block-title">Progressão do Aluguel por Quartos</h3>
+                  <p class="block-subtitle">Relação direta entre número de cômodos e valor anunciado</p>
+                </div>
+              </div>
+              <div class="chart-canvas-wrapper">
+                <canvas id="chart-bedrooms"></canvas>
+              </div>
+            </section>
+
+            <!-- Gráfico 3: Ranking de Bairros (Mais Valorizados vs Mais Acessíveis) -->
+            <section class="content-block">
+              <div class="block-header">
+                <div>
+                  <h3 class="block-title">Bairros com Maiores e Menores Médias</h3>
+                  <p class="block-subtitle">Grupos estatisticamente representativos (&ge; 15 anúncios)</p>
+                </div>
+              </div>
+              <div class="chart-canvas-wrapper" style="height: 250px;">
+                <canvas id="chart-rankings"></canvas>
+              </div>
+            </section>
+
+            <!-- Síntese da Região Ativa -->
+            <section class="content-block" aria-label="Síntese da região">
+              <div class="block-header">
+                <div>
+                  <h3 class="block-title">Síntese Estrutural</h3>
+                  <p class="block-subtitle">Atributos e composição da seleção atual</p>
+                </div>
+              </div>
+              <div class="info-rows" id="region-summary-rows">
+                <div class="info-row">
+                  <span class="info-row-key">Área Útil Média</span>
+                  <span class="info-row-val" id="summary-area">-- m²</span>
+                </div>
+                <div class="info-row">
+                  <span class="info-row-key">Custo Total Médio (c/ taxas)</span>
+                  <span class="info-row-val" id="summary-total">R$ --</span>
+                </div>
+                <div class="info-row">
+                  <span class="info-row-key">Faixa de Valores Anunciados</span>
+                  <span class="info-row-val" id="summary-range">R$ -- a R$ --</span>
+                </div>
+              </div>
+            </section>
+          </div>
+
+          <!-- ABA 2: ANÚNCIOS SEPARADOS POR ZONA / BAIRRO -->
+          <div class="tab-pane" data-tab-pane="anuncios" role="tabpanel">
+            <section class="content-block">
+              <div class="block-header listings-block-header">
+                <div>
+                  <h3 class="block-title" id="listings-pane-title">Anúncios Separados por Zona Englobada</h3>
+                  <p class="block-subtitle" id="listings-pane-subtitle">
+                    Visualize cada imóvel individualmente por zona geográfica ou círculo de bairro do mapa
+                  </p>
+                </div>
+                <div class="listings-header-actions">
+                  <button type="button" id="btn-listings-show-pins" class="table-action-btn" title="Destacar os pinos individuais destes anúncios no mapa">
+                    &#128205; Pinos no Mapa
+                  </button>
+                </div>
+              </div>
+
+              <!-- Seletor de Zonas Englobadas -->
+              <div class="listings-zone-switcher" role="group" aria-label="Separar anúncios por Zona de São Paulo">
+                <button type="button" class="zone-pill-btn is-active" data-listings-zone="all">
+                  Todas as Zonas
+                </button>
+                <button type="button" class="zone-pill-btn" data-listings-zone="Centro">
+                  <span class="zone-dot" style="background: #8b5cf6;"></span>Centro
+                </button>
+                <button type="button" class="zone-pill-btn" data-listings-zone="Zona Norte">
+                  <span class="zone-dot" style="background: #06b6d4;"></span>Z. Norte
+                </button>
+                <button type="button" class="zone-pill-btn" data-listings-zone="Zona Sul">
+                  <span class="zone-dot" style="background: #10b981;"></span>Z. Sul
+                </button>
+                <button type="button" class="zone-pill-btn" data-listings-zone="Zona Leste">
+                  <span class="zone-dot" style="background: #f59e0b;"></span>Z. Leste
+                </button>
+                <button type="button" class="zone-pill-btn" data-listings-zone="Zona Oeste">
+                  <span class="zone-dot" style="background: #ec4899;"></span>Z. Oeste
+                </button>
+                <button type="button" class="zone-pill-btn" data-listings-zone="Região Metropolitana">
+                  <span class="zone-dot" style="background: #64748b;"></span>Metropolitana
+                </button>
+                <button type="button" id="btn-listings-clear-filters" class="zone-clear-filters-btn" title="Limpar todos os filtros ativos">
+                  &times; Limpar Filtros
+                </button>
+              </div>
+
+              <!-- Banner do Bairro / Círculo ativo (quando selecionado no mapa) -->
+              <div id="listings-active-district-banner" class="listings-district-banner" style="display: none;">
+                <div class="listings-banner-info">
+                  <span class="listings-banner-tag">Zona do Círculo Selecionado:</span>
+                  <strong id="listings-banner-district-name">--</strong>
+                  <span id="listings-banner-district-stats" class="listings-banner-stats"></span>
+                </div>
+                <button type="button" id="btn-clear-district-listings" class="btn-ghost" style="padding: 0.25rem 0.55rem; font-size: 0.74rem;">
+                  Ver Toda a Macrozona &times;
+                </button>
+              </div>
+
+              <!-- Controles de Busca, Ordenação e Modo de Agrupamento -->
+              <div class="listings-controls-row">
+                <div class="listings-search-col">
+                  <input
+                    type="text"
+                    id="listings-search-input"
+                    class="search-input"
+                    placeholder="Buscar por rua, avenida ou bairro (ex: Anália Franco, Rua José Oscar)..."
+                    aria-label="Buscar anúncios por endereço ou bairro"
+                  />
+                </div>
+                <div class="listings-sort-col">
+                  <select id="listings-sort-select" class="filter-select" aria-label="Ordenar anúncios">
+                    <option value="zone_grouped" selected>Separar por Zona / Bairro</option>
+                    <option value="rent_desc">Maior Aluguel (R$)</option>
+                    <option value="rent_asc">Menor Aluguel (R$)</option>
+                    <option value="area_desc">Maior Área (m²)</option>
+                    <option value="m2_asc">Menor Preço/m²</option>
+                    <option value="total_desc">Maior Custo Total</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- Resumo da listagem filtrada -->
+              <div id="listings-summary-strip" class="listings-summary-strip">
+                Exibindo anúncios da seleção atual
+              </div>
+
+              <!-- Lista de Anúncios Individuais (Cards ou Agrupados por Zona) -->
+              <div id="individual-listings-container" class="individual-listings-grid">
+                <!-- Preenchido dinamicamente via JS -->
+              </div>
+
+              <div id="listings-load-more-wrap" style="display: none; margin-top: 0.85rem; text-align: center;">
+                <button type="button" id="btn-load-more-listings" class="btn-ghost" style="width: 100%; justify-content: center; padding: 0.55rem;">
+                  Carregar mais anúncios
+                </button>
+              </div>
+            </section>
+          </div>
+
+          <!-- ABA 3: TABELA DE BAIRROS DETALHADA -->
+          <div class="tab-pane" data-tab-pane="informacoes" role="tabpanel">
+            <section class="content-block">
+              <div class="block-header">
+                <div>
+                  <h3 class="block-title">Detalhamento dos Bairros de São Paulo</h3>
+                  <p class="block-subtitle">Ordene ou busque por qualquer localidade</p>
+                </div>
+              </div>
+              <div class="table-search-row">
+                <input
+                  type="text"
+                  id="table-search-input"
+                  class="search-input"
+                  placeholder="Buscar bairro (ex: Pinheiros, Santana, Mooca)..."
+                  aria-label="Buscar bairro na tabela"
+                />
+              </div>
+              <div class="table-responsive-container">
+                <table class="data-table" id="districts-table">
+                  <thead>
+                    <tr>
+                      <th>Bairro</th>
+                      <th>Região</th>
+                      <th>Anúncios</th>
+                      <th>Aluguel Médio</th>
+                      <th>Mediana</th>
+                      <th>Preço/m²</th>
+                      <th>Ação</th>
+                    </tr>
+                  </thead>
+                  <tbody id="districts-table-body">
+                    <!-- Preenchido dinamicamente via JS -->
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          </div>
+
+          <!-- ABA 3: METADADOS & DIAGNÓSTICO DE TRATATIVAS -->
+          <div class="tab-pane" data-tab-pane="notas" role="tabpanel">
+            <section class="content-block">
+              <div class="block-header">
+                <div>
+                  <h3 class="block-title">Auditoria de Inconsistências &amp; Qualidade</h3>
+                  <p class="block-subtitle">Pontos identificados no dataset para tratativas futuras</p>
+                </div>
+              </div>
+              <div class="diagnostics-grid">
+                <div class="diag-card">
+                  <span class="diag-number" id="diag-area-zero">2</span>
+                  <span class="diag-label">Imóveis com área &le; 0 m²</span>
+                  <span class="diag-desc">Casos inconsistentes que distorcem o cálculo de R$/m²</span>
+                </div>
+                <div class="diag-card">
+                  <span class="diag-number" id="diag-duplicates">46</span>
+                  <span class="diag-label">Anúncios idênticos parciais</span>
+                  <span class="diag-desc">Mesmo endereço, bairro, área, quartos e preço</span>
+                </div>
+                <div class="diag-card">
+                  <span class="diag-number" id="diag-singletons">340</span>
+                  <span class="diag-label">Bairros com apenas 1 anúncio</span>
+                  <span class="diag-desc">Amostras sem significância isolada (n=1)</span>
+                </div>
+              </div>
+            </section>
+
+            <section class="content-block">
+              <div class="block-header">
+                <div>
+                  <h3 class="block-title">Média vs Mediana: Explicação Metodológica</h3>
+                  <p class="block-subtitle">Conceito fundamental exigido no Edital SYNAPTA</p>
+                </div>
+              </div>
+              <div class="methodology-card">
+                <p>
+                  <strong>Por que a Média (R$ 3.250) é superior à Mediana (R$ 2.415)?</strong>
+                </p>
+                <p>
+                  A distribuição de preços de aluguel possui <em>assimetria positiva (à direita)</em>. A maioria dos anúncios concentra-se em faixas populares e médias, mas a presença de imóveis de alto padrão (anúncios que chegam a R$ 25.000 em bairros nobres como Jardins, Itaim Bibi e Vila Nova Conceição) puxa a <strong>média aritmética para cima</strong>.
+                </p>
+                <p>
+                  A <strong>mediana</strong>, por sua vez, divide exatamente a amostra ao meio (50% custam até R$ 2.415 e 50% custam mais), sendo uma medida muito mais resistente a valores extremos (outliers).
+                </p>
+              </div>
+            </section>
+
+            <section class="content-block">
+              <div class="block-header">
+                <div>
+                  <h3 class="block-title">Limitações do Dataset</h3>
+                  <p class="block-subtitle">Critérios a considerar na tomada de decisão</p>
+                </div>
+              </div>
+              <ul class="limitations-list">
+                <li><strong>Preço Anunciado vs Negociado:</strong> Os valores refletem a expectativa inicial do proprietário, não o valor final fechado no contrato de locação.</li>
+                <li><strong>Concentração Geográfica:</strong> Bairros das zonas Sul e Oeste possuem ampla densidade amostral, enquanto áreas periféricas contam com menor cobertura no portal de anúncios.</li>
+                <li><strong>Ausência de Variáveis Críticas:</strong> O dataset não contempla andar, estado de conservação do imóvel, mobília ou infraestrutura do condomínio (piscina, academia, portaria 24h).</li>
+              </ul>
+            </section>
+          </div>
+        </div>
+      </aside>
+    </main>
+  </div>
+
+  <!-- Leaflet JS -->
+  <script
+    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+    crossorigin=""
+  ></script>
+
+  <!-- Chart.js (CDN leve para visualizações gráficas) -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+
+  <!-- Malha Territorial das Regiões e Base de Dados Processada -->
+  <script src="./data/sp_zones.js"></script>
+  <script src="./data/housing_data.js"></script>
+
+  <!-- Scripts Modulares da Aplicação -->
+  <script src="./js/map.js"></script>
+  <script src="./js/ui.js"></script>
+  <script src="./js/app.js"></script>
+</body>
+</html>
